@@ -5,7 +5,7 @@
 
 
 # Authors
-Saksham - @sakshamsoni97
-Daniel - @cyizhou
-Rui - @ruirae123
+Saksham - @sakshamsoni97 \
+Daniel - @cyizhou \
+Rui - @ruirae123 \
 Jake - @jpmart12
