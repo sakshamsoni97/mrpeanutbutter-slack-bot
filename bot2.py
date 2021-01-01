@@ -1,4 +1,5 @@
 import os
+import random
 from slack_bolt import App
 
 # Initializes your app with your bot token and signing secret
@@ -15,6 +16,16 @@ def say_hello(message, say):
 @app.message("knock knock")
 def ask_who(message, say):
     say("_Who's there?_")
+
+
+@app.message("What would Dimistris say?")
+def db_quotes(message, say):
+    quotes = ["LASSO is not sparse", "If you found the one please tell me",
+                "Can you hear me Michael?", "This is not a laughing matter",
+                "Ah my friend Tico", "Are you with me?", "Guys this is serious business",
+                "I can guarantee you this will be in the exam"]
+    say(random.choice(quotes)))
+
 
 @app.event("app_home_opened")
 def update_home_tab(client, event, logger):
@@ -65,6 +76,7 @@ def update_home_tab(client, event, logger):
 
   except Exception as e:
     logger.error(f"Error publishing home tab: {e}")
+
 
 # Start your app
 if __name__ == "__main__":
