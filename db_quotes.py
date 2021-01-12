@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import random
 from slack_bolt import App
@@ -15,8 +14,7 @@ with open('./db_quotes.json') as f:
     db_quotes = json.loads(f.read())
 
 @app.message("db")
-def quote_DB(message, say):
-    user = message['user']
+def quote_DB(say):
     say(random.sample(db_quotes['responses'], 1)[0])
 
 if __name__ == "__main__":
