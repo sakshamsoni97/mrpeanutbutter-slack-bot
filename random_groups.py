@@ -1,16 +1,27 @@
 import os
 import random
 from slack_bolt import App
-from slack_sdk import WebClient
+from slack_sdk import WebClient, logging
+from slack_sdk.errors import SlackApiError
+import json
 
+##################################
+#### Create RandomGroup Class ####
+##################################
 class RandomGroups:
+    """
+    This class will focus on initiate group chats for users who agree to join the event
+    """
     def __init__(self, user_ids, group_size):
         # TODO: better setup needed
-        self.client = WebClient(token="xoxb-353724937235-1597595805425-mlj5KTMB7F9uD7uNDFOXejlA")
-        self.response = self.client.conversations_members(channel="G01HD2W1CVA")
+        """
+        Take a list of users and generate random groups at a specified time
 
-        # TODO: user_ids need to be updated with the users who opt in the upcoming random groups
-        self.user_ids = self.response["members"][1:]
+        :param active_user_ids: a list of users who will join the random group event
+        :param group_size: pre-defined group size
+        """
+
+        self.user_ids = user_ids
         self.group_size = group_size
         self.random_groups = self.assign_random_groups()
 
@@ -55,9 +66,29 @@ class RandomGroups:
             if mod ==0:
                 return list(self.generate_groups(self.user_ids, self.group_size))
 
-    # TODO: initialize groups and post a message in a pre-specified time
-    def start_group_chats(self):
-        return("current groups are:" + str(self.random_groups))
+    def start_group_chats(self, bot_token, chat_prompts):
+
+        # initialize chats for each random group
+        for group in self.random_groups:
+
+            logger = logging.getLogger()
+            client = WebClient(token=os.environ.get(bot_token))
+
+            try:
+                result = client.conversations_open(
+                    token=bot_token,
+                    users=','.join(group))
+
+                client.chat_postMessage(
+                    token=bot_token,
+                    channel=result['channel']['id'],
+                    text="Ta daa! \nDesinty created this group. Now, answer the following question: \n\n" +
+                         random.sample(chat_prompts['responses'], 1)[0])
+
+            except SlackApiError as e:
+                logger.error("Error scheduling message: {}".format(e))
+
+
 
 #######################
 #### Setup the Env ####
@@ -68,9 +99,22 @@ app = App(
     signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
 )
 
-@app.message("rg")
-def start_group_chats(say, user_ids=["placeholder here"]):
-    say(RandomGroups(user_ids=user_ids, group_size=2).start_group_chats())
+# get a list of users who agree to join current random group event
+#TODO: create a class that generate a list of active users & post messages at a pre-specified time
+bot_token = "xoxb-353724937235-1597595805425-jveZpLV339XU80rE7fjjAskR"
+client = WebClient(token=bot_token)
+response = client.conversations_members(channel="G01HD2W1CVA")
+user_ids = response["members"][1:]
+print(user_ids)
+
+# import the chat prompts
+#TODO: collect more prompts
+with open('./chat_prompts.json') as f:
+   chat_prompts = json.loads(f.read())
+
+# initiliaze the groups
+print(RandomGroups(user_ids=user_ids, group_size=2).random_groups)
+RandomGroups(user_ids=user_ids, group_size=2).start_group_chats(bot_token=bot_token, chat_prompts=chat_prompts)
 
 if __name__ == "__main__":
    app.start(port=int(os.environ.get("PORT", 3000)))
