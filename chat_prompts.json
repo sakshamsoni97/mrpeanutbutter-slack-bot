@@ -1,0 +1,11 @@
+{
+    "description": "Conversation Starter for Random Groups",
+    "placeholders": [],
+    "responses": [
+        "What is your biggest fear?",
+        "What are you looking forward to this week/month/year.../life?",
+        "Should pinneapple be banned from pizza toppings?",
+        "Could you please recommend a movie?",
+        "What is your ideal Sunday?"
+    ]
+}
