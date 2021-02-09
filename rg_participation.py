@@ -8,11 +8,11 @@ from utils import *
 with open('./rg_participation_message.json') as f:
     js_message = json.loads(f.read())
 
-##################################
-#### Create WeeklyUpdate Class ####
-##################################
+###############################################
+#### Create RandomGroupParticipation Class ####
+###############################################
 
-class RandomGroupPartcipation:
+class RandomGroupParticipation:
 
     """
     This class will focus on asking users whether they want to signup for the random group
@@ -61,9 +61,9 @@ user_ids = ['W015KRJ3L4C', 'W0156U3CTEJ']
 
 # send message questions
 for user in user_ids:
-    RandomGroupPartcipation(bot_token=bot_token, user_id=user).send_message()
-    #TODO: @Saksham, when integrating the pipeline, this script should be scheduled to run on e.g. weekly basis
-    # you could leverage the helper in utils.py
+    RandomGroupParticipation(bot_token=bot_token, user_id=user).send_message()
+    #TODO: @Saksham, when integrating the pipeline, this script will need to be scheduled to run on e.g. weekly basis
+    # FYI, you could leverage the helper in utils.py, but you might have a better way of doing it
 
 # get the response
 @app.action("rg-in-person")
@@ -72,7 +72,7 @@ def get_participation(ack, say, body):
     say('Great! You are confirmed for an IN-PERSON random meetup.')
     # body has all the info that you could possibly need for that user action
     print(body['user']['username'], body['actions'][0]['value'])
-    #TODO: @Saksham & @Daniel - add a function in the line below to update your user status!
+    #TODO: @Saksham & @Daniel - add a function in the line below to update your user status! - let us know if u have questions
 
 @app.action("rg-virtual")
 def get_participation(ack, say, body):
