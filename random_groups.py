@@ -4,7 +4,7 @@ from slack_bolt import App
 from slack_sdk import WebClient, logging
 from slack_sdk.errors import SlackApiError
 import json
-import schedule, time
+from utils import *
 
 ##################################
 #### Create RandomGroup Class ####
@@ -13,7 +13,7 @@ class RandomGroups:
     """
     This class will focus on initiate group chats for users who agree to join the event
     """
-    def __init__(self, user_ids, group_size):
+    def __init__(self, bot_token, user_ids, group_size):
         # TODO: better setup needed
         """
         Take a list of users and generate random groups at a specified time
@@ -21,7 +21,7 @@ class RandomGroups:
         :param active_user_ids: a list of users who will join the random group event
         :param group_size: pre-defined group size
         """
-
+        self.bot_token = bot_token
         self.user_ids = user_ids
         self.group_size = group_size
         self.random_groups = self.assign_random_groups()
@@ -67,21 +67,21 @@ class RandomGroups:
             if mod ==0:
                 return list(self.generate_groups(self.user_ids, self.group_size))
 
-    def start_group_chats(self, bot_token, chat_prompts):
+    def start_group_chats(self, chat_prompts):
 
         # initialize chats for each random group
         for group in self.random_groups:
 
             logger = logging.getLogger()
-            client = WebClient(token=os.environ.get(bot_token))
+            client = WebClient(token=os.environ.get(self.bot_token))
 
             try:
                 result = client.conversations_open(
-                    token=bot_token,
+                    token=self.bot_token,
                     users=','.join(group))
 
                 client.chat_postMessage(
-                    token=bot_token,
+                    token=self.bot_token,
                     channel=result['channel']['id'],
                     text="Ta daa! \nDesinty created this group. Now, answer the following question: \n\n" +
                          random.sample(chat_prompts['responses'], 1)[0])
@@ -89,26 +89,11 @@ class RandomGroups:
             except SlackApiError as e:
                 logger.error("Error scheduling message: {}".format(e))
 
-    # helper function
-    def schedule_helper(self, bot_token, chat_prompts, int_freq, int_weekday, str_time):
-        if int_weekday == 1:
-            schedule.every(int_freq).monday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
-        if int_weekday == 2:
-            schedule.every(int_freq).tuesday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
-        if int_weekday == 3:
-            schedule.every(int_freq).wednesday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
-        if int_weekday == 4:
-            schedule.every(int_freq).thursday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
-        if int_weekday == 5:
-            schedule.every(int_freq).friday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
-        if int_weekday == 6:
-            schedule.every(int_freq).saturday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
-        if int_weekday == 7:
-            schedule.every(int_freq).sunday.at(str_time).do(self.start_group_chats, bot_token=bot_token, chat_prompts=chat_prompts)
+    def schedule_group_chats(self, int_weekday, int_freq, str_time, sec_sleep, chat_prompts):
 
-    def schedule_group_chats(self, bot_token, chat_prompts, int_freq, int_weekday, str_time, sec_sleep=10):
+        schedule_helper(int_weekday, int_freq, str_time, self.start_group_chats,
+                        chat_prompts=chat_prompts)
 
-        self.schedule_helper(bot_token, chat_prompts, int_freq, int_weekday, str_time)
         while True:
             # Checks whether a scheduled task
             # is pending to run or not
@@ -138,9 +123,8 @@ with open('./chat_prompts.json') as f:
    chat_prompts = json.loads(f.read())
 
 # initiliaze the groups
-print(RandomGroups(user_ids=user_ids, group_size=2).random_groups)
-RandomGroups(user_ids=user_ids, group_size=2).schedule_group_chats(bot_token=bot_token, chat_prompts=chat_prompts,
-                                                                   int_freq=1, int_weekday=2, str_time='12:12')
+RandomGroups(bot_token=bot_token, user_ids=user_ids, group_size=2).\
+    schedule_group_chats(int_weekday=2, int_freq=1, str_time='16:29', sec_sleep=10, chat_prompts=chat_prompts)
 
 if __name__ == "__main__":
    app.start(port=int(os.environ.get("PORT", 3000)))
