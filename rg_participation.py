@@ -56,7 +56,7 @@ app = App(
 )
 
 #TODO: create a class that generate a list of active users & post messages at a pre-specified time
-bot_token = "xoxb-353724937235-1597595805425-3wimAeqFxi3cEhPJsv9324DE"
+bot_token = 'TBD'
 user_ids = ['W015KRJ3L4C', 'W0156U3CTEJ']
 
 # send message questions
