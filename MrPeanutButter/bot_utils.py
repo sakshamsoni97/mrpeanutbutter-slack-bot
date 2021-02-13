@@ -5,6 +5,7 @@ from slack_sdk import WebClient, logging
 from slack_sdk.errors import SlackApiError
 import json
 
+
 ##################################
 #### Create RandomGroup Class ####
 ##################################
@@ -20,10 +21,9 @@ class RandomGroups:
         :param active_user_ids: a list of users who will join the random group event
         :param group_size: pre-defined group size
         """
-
         self.user_ids = user_ids
         self.group_size = group_size
-        self.random_groups = self.assign_random_groups()
+        self.random_groups = self._assign_random_groups()
 
     # helper function
     def generate_groups(self, lst, n):
@@ -32,15 +32,15 @@ class RandomGroups:
             yield lst[i:i+n]
 
     # main function
-    def assign_random_groups(self):
+    def _assign_random_groups(self):
         num_users = len(self.user_ids)
         mod = num_users % self.group_size
-        user_ids = random.shuffle(self.user_ids)
+        random.shuffle(self.user_ids)
 
         # if the group size is 2 and number of participants is odd, add one user to a random group
         if self.group_size==2:
             if mod == 1:
-                single_user = user_ids.pop(0)
+                single_user = self.user_ids.pop(0)
                 lst_groups = list(self.generate_groups(self.user_ids, self.group_size))
                 lst_groups[0].insert(0, single_user)
                 return lst_groups
@@ -54,12 +54,12 @@ class RandomGroups:
         # e.g. group_size = 4, and we have 4, 4, 1 --> groups will be 4, 2, 3. In other words, group 5 is not allowed.
         if self.group_size > 2:
             if mod > 1:
-                smaller_group = user_ids[0:mod]
+                smaller_group = self.user_ids[0:mod]
                 lst_groups = list(self.generate_groups(self.user_ids[mod:], self.group_size))
                 lst_groups.append(smaller_group)
                 return lst_groups
             if mod == 1:
-                temp = user_ids[0:self.group_size+1]
+                temp = self.user_ids[0:self.group_size+1]
                 lst_groups = list(self.generate_groups(self.user_ids[self.group_size+1:], self.group_size))
                 lst_groups = lst_groups + [temp[:len(temp)//2], temp[:len(temp)//2:]]
                 return lst_groups
@@ -88,33 +88,10 @@ class RandomGroups:
             except SlackApiError as e:
                 logger.error("Error scheduling message: {}".format(e))
 
-
-
-#######################
-#### Setup the Env ####
-#######################
-# Initializes the app with the bot token and signing secret
-app = App(
-    token=os.environ.get("SLACK_BOT_TOKEN"),
-    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
-)
-
-# get a list of users who agree to join current random group event
-#TODO: create a class that generate a list of active users & post messages at a pre-specified time
-bot_token = "xoxb-353724937235-1597595805425-jveZpLV339XU80rE7fjjAskR"
-client = WebClient(token=bot_token)
-response = client.conversations_members(channel="G01HD2W1CVA")
-user_ids = response["members"][1:]
-print(user_ids)
-
-# import the chat prompts
-#TODO: collect more prompts
-with open('./chat_prompts.json') as f:
-   chat_prompts = json.loads(f.read())
-
-# initiliaze the groups
-print(RandomGroups(user_ids=user_ids, group_size=2).random_groups)
-RandomGroups(user_ids=user_ids, group_size=2).start_group_chats(bot_token=bot_token, chat_prompts=chat_prompts)
-
-if __name__ == "__main__":
-   app.start(port=int(os.environ.get("PORT", 3000)))
+###################################
+#### Pick a Random Quote       ####
+###################################
+def pick_random_quote(self, path='./db_quotes.json'):
+    with open(path) as f:
+        quotes = json.loads(f.read())
+    return(random.sample(quotes['responses'], 1)[0])

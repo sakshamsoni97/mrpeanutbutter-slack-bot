@@ -6,7 +6,7 @@ from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient, logging
 import sqlite3
 
-from mbanbot.bot_utils import RandomGroupsGenerator
+from MrPeanutButter.bot_utils import RandomGroups
 
 # Initializes your app with your bot token and signing secret
 app = App(
