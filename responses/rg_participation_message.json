@@ -1,0 +1,46 @@
+[
+    {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": "Would you like to participate in this round of random group?"
+        }
+    },
+
+    {
+        "type": "actions",
+        "block_id": "action-rg",
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Yes, in-person"
+                },
+                "style": "primary",
+                "value": "in-person",
+                "action_id": "rg-in-person"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Yes, virtual"
+                },
+                "style": "primary",
+                "value": "virtual",
+                "action_id": "rg-virtual"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "No, thanks"
+                },
+                "style": "danger",
+                "value": "no",
+                "action_id": "rg-no"
+            }
+        ]
+    }
+]
