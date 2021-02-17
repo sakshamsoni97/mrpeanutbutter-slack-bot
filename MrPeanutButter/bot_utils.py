@@ -5,6 +5,7 @@ from slack_sdk import WebClient, logging
 from slack_sdk.errors import SlackApiError
 import json
 import schedule, time
+from db_utils import DataBaseUtils 
 
 
 ##################################
@@ -15,7 +16,6 @@ class RandomGroups:
     This class will focus on initiate group chats for users who agree to join the event
     """
     def __init__(self, bot_token, user_ids, group_size):
-        # TODO: better setup needed
         """
         Take a list of users and generate random groups at a specified time
 
@@ -128,16 +128,18 @@ class RandomGroupParticipation:
     """
     This class will focus on asking users whether they want to signup for the random group
     """
-    def __init__(self, bot_token, user_ids):
+    def __init__(self, 
+                bot_token: str, 
+                user_ids: list, 
+                channel_name: str):
         """
         Take a user and ask them if they would like to participate in
         this week's RandomGroup and virtually or not
         """
         self.user_ids = user_ids
         self.bot_token = bot_token
+        self.channel_name = channel_name
 
-    # to send interactive message to users
-    # TODO: Make this weekly and update the SQL weekly to set everything to 0
     def send_message(self, user_id):
 
         logger = logging.getLogger()
@@ -160,8 +162,7 @@ class RandomGroupParticipation:
             logger.error("Error scheduling message: {}".format(e))
         
     def send_message_to_all(self):
-        ## TODO: refresh table
-        
+        DataBaseUtils(self.channel_name).refresh_participation()
 
         ## send message to every user
         for user_id in self.user_ids:
@@ -179,7 +180,8 @@ class RandomGroupParticipation:
 ###################################
 #### Pick a Random Quote       ####
 ###################################
-def pick_random_quote(self, path='responses/db_quotes.json'):
+def pick_random_quote(path='responses/class_quotes.json'):
     with open(path) as f:
-        quotes = json.loads(f.read())
-    return(random.sample(quotes['responses'], 1)[0])
+        responses = json.loads(f.read())
+    response = random.sample(responses['responses'], 1)
+    return((response["quote"], response["quotee"]))
