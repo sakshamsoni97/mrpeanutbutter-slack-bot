@@ -17,6 +17,8 @@ from MrPeanutButter.db_utils import DataBaseUtils
 today = datetime.date.today()
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
+with open('responses/chat_prompts.json') as f:
+   chat_prompts = json.loads(f.read())
 
 # Initializes the app
 app = App(
@@ -33,10 +35,6 @@ def send_random_quote(ack, say, command):
 
 
 ### Weekly Participation Messages ###
-
-# send message questions
-# for user in user_ids:
-#     RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=users).send_message()
 
 # user initiated participation update
 @app.action("update-participation")
@@ -58,45 +56,29 @@ def check_participation_status(ack, say, body):
 def get_inperson_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for an IN-PERSON random meetup.')
-  # body has all the info that you could possibly need for that user action
-  print(body['user']['username'], body['actions'][0]['value'])
+  print(body['user']['username'], body['actions'][0]['value'])  # TODO: change this to logging in file
   #TODO: @Saksham & @Daniel - add a function in the line below to update your user status! - let us know if u have questions
+  DataBaseUtils(channel_name="mban").\
+    update_user_response(user_id=body['user']['user_id'], participating=True, virtual=False)
 
 @app.action("rg-virtual")
 def get_virtual_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for a VIRTUAL random meetup.')
   print(body['user']['username'], body['actions'][0]['value'])
+  DataBaseUtils(channel_name="mban").\
+    update_user_response(user_id=body['user']['user_id'], participating=True, virtual=True)
 
 @app.action("rg-no")
 def get_not_participating(ack, say, body):
   ack()
   say('Oh no! We are sad that you cannot make it this time, please consider joining the next one!')
   print(body['user']['username'], body['actions'][0]['value'])
+  DataBaseUtils(channel_name="mban").\
+    update_user_response(user_id=body['user']['user_id'], participating=False, virtual=False)
 
 
-### Random Groups Start ###
-with open('responses/chat_prompts.json') as f:
-  chat_prompts = json.loads(f.read())
-
-RandomGroups(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, group_size=2).\
-  schedule_group_chats(int_weekday=2, int_freq=1, str_time='16:29', sec_sleep=10, chat_prompts=chat_prompts)
-
-# @app.message("Test: check current users")
-# def add_user(message, say):
-#     connection = sqlite3.connect(":memory:")
-#     cursor = connection.cursor()
-#     sql_file = open("Untitled.sql")
-#     sql_as_string = sql_file.read()
-#     cursor.executescript(sql_as_string)
-
-#     for user in cursor.execute("SELECT user FROM users"):
-#       say(user)
-
-# @app.message("rg")
-# def post_random_groups(message):
-#     # do something
-#     return
+### Random Groups ###
 
 @app.message(":wave:")
 def say_hello(message, say):
@@ -112,11 +94,8 @@ def ask_who(message, say):
 def update_home_tab(client, event, logger):
   user = event["user"]
   try:
-    # views.publish is the method that your app uses to push a view to the Home tab
     client.views_publish(
-      # the user that opened your app's app home
       user_id=user,
-      # the view object that appears in the app home
       view={
         "type": "home",
         "callback_id": "home_view",
@@ -172,8 +151,16 @@ def update_home_tab(client, event, logger):
   except Exception as e:
     logger.error(f"Error publishing home tab: {e}")
 
-# Start your app
+### Start the app ###
 if __name__ == "__main__":
-  
+  user_ids = DataBaseUtils(channel_name="mban").get_users()
+
+  ## schedule weekly participation messages
+  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, channel_name="mban").\
+    schedule_messages(int_weekday=1, int_freq=1, str_time='16:29', sec_sleep=10)
+
+  ## schedule random group
+  RandomGroups(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, group_size=2).\
+    schedule_group_chats(int_weekday=2, int_freq=1, str_time='16:29', sec_sleep=10, chat_prompts=chat_prompts)
 
   app.start(port=int(os.environ.get("PORT", 3000)))
