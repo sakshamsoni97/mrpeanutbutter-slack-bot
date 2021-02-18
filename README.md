@@ -13,6 +13,7 @@ This slack bot is a fun side project we undertook because we wanted to find crea
 3. Documentation - \
     a. add docstrings to all functions
     b. add installation and start-up instructions to README
+4. create config (yml) file for parameters like scheduling freq etc.
 
 # Authors
 Saksham - @sakshamsoni97 \
