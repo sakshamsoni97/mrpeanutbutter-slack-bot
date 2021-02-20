@@ -56,6 +56,7 @@ class RandomGroups:
         self.chat_prompts = chat_prompts
         self.group_size = group_size
         self.channel_name = channel_name
+        self.logger = logging.getLogger("mr.pb.logger")
 
     def _generate_groups(self, lst, n):
         """
@@ -123,7 +124,6 @@ class RandomGroups:
 
         random_groups = random_groups_in_person + random_groups_virtual
 
-        logger = logging.getLogger()
         client = WebClient(token=os.environ.get(self.bot_token))
 
         # initialize chats for each random group
@@ -140,7 +140,9 @@ class RandomGroups:
                          random.sample(self.chat_prompts['responses'], 1)[0])
 
             except SlackApiError as e:
-                logger.error("Error scheduling message: {}".format(e))
+                self.logger.error(f"Error scheduling message for users {group}: {e}")
+
+            self.logger.info("finieshed creating random groups")
 
     def schedule_group_chats(self, int_weekday, int_freq, str_time, sec_sleep):
         """ Schedule group chats every week using given parameters.
@@ -183,6 +185,7 @@ class RandomGroupParticipation:
         self.user_ids = user_ids
         self.bot_token = bot_token
         self.channel_name = channel_name
+        self.logger = logging.getLogger("mr.pb.logger")
 
     def send_message(self, user_id):
         """
@@ -191,7 +194,6 @@ class RandomGroupParticipation:
         :param user_id: a string that represents a user id
         :return: None
         """
-        logger = logging.getLogger()
         client = WebClient(token=os.environ.get(self.bot_token))
 
         try:
@@ -208,7 +210,7 @@ class RandomGroupParticipation:
                 blocks=js_message)
 
         except SlackApiError as e:
-            logger.error("Error scheduling message: {}".format(e))
+            self.logger.error(f"Error scheduling message for user {user_id}: {e}")
         
     def send_message_to_all(self):
         """
@@ -221,6 +223,8 @@ class RandomGroupParticipation:
         ## send message to every user
         for user_id in self.user_ids:
             self.send_message(user_id)
+        
+        self.logger.info("sent participation messages to all")
 
     def schedule_messages(self, int_weekday, int_freq, str_time, sec_sleep):
         """
@@ -228,7 +232,6 @@ class RandomGroupParticipation:
 
         See documentation for schedule_helper function.
         """
-
         schedule_helper(int_weekday, int_freq, str_time, self.send_message_to_all)
 
         while True:
@@ -249,5 +252,6 @@ def pick_random_quote(path='responses/class_quotes.json'):
     """
     with open(path) as f:
         responses = json.loads(f.read())
+    random.seed(round( time.time() / 1e6 ) ) ## put random seed to make sure we don't get the same groups everytime
     response = random.sample(responses['responses'], 1)
     return((response["quote"], response["quotee"]))

@@ -26,6 +26,19 @@ app = App(
   signing_secret=SLACK_SIGNING_SECRET
 )
 
+# logger
+if not os.path.exists("logs/"):
+  os.mkdir("logs/")
+
+logger_filename = "logs/MrPB_runtime_logs.log"
+logging.basicConfig(
+      filename=logger_filename,
+      level=logging.DEBUG,
+      format="%(asctime)s | %(module)s | %(levelname)s | %(message)s",
+      datefmt="%m-%d-%Y %I:%M:%S %p",
+  )
+logger = logging.getLogger("mr.pb.logger")
+
 ### Random Quote ###
 
 @app.command("/quote")
@@ -56,8 +69,7 @@ def check_participation_status(ack, say, body):
 def get_inperson_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for an IN-PERSON random meetup.')
-  print(body['user']['username'], body['actions'][0]['value'])  # TODO: change this to logging in file
-  #TODO: @Saksham & @Daniel - add a function in the line below to update your user status! - let us know if u have questions
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['value}']}")  # TODO: change this to logging in file
   DataBaseUtils(channel_name="mban").\
     update_user_response(user_id=body['user']['user_id'], participating=True, virtual=False)
 
@@ -65,7 +77,7 @@ def get_inperson_participant(ack, say, body):
 def get_virtual_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for a VIRTUAL random meetup.')
-  print(body['user']['username'], body['actions'][0]['value'])
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['value}']}")
   DataBaseUtils(channel_name="mban").\
     update_user_response(user_id=body['user']['user_id'], participating=True, virtual=True)
 
@@ -73,14 +85,14 @@ def get_virtual_participant(ack, say, body):
 def get_not_participating(ack, say, body):
   ack()
   say('Oh no! We are sad that you cannot make it this time, please consider joining the next one!')
-  print(body['user']['username'], body['actions'][0]['value'])
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['value}']}")
   DataBaseUtils(channel_name="mban").\
     update_user_response(user_id=body['user']['user_id'], participating=False, virtual=False)
 
 
 ### Random Groups ###
 
-@app.message(":wave:")
+@app.message(":wave: ")
 def say_hello(message, say):
   user = message['user']
   say(f"Hi there, <@{user}>!")
