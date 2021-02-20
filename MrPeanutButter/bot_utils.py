@@ -5,8 +5,38 @@ from slack_sdk import WebClient, logging
 from slack_sdk.errors import SlackApiError
 import json
 import schedule, time
-from db_utils import DataBaseUtils 
+from db_utils import DataBaseUtils
 
+##################################
+#### General Helper Functions ####
+##################################
+
+def schedule_helper(int_weekday, int_freq, str_time, action, **kwargs):
+    """
+    Helper function to schedule recurring jobs.
+
+    :param int_weekday: int (1-7), 1-Monday, 2-Tuesday...7-Sunday
+    :param int_freq: int, int, 1-every week, 2-every other week...
+    :param str_time: int, 24hour format e.g. "16:30"
+    :param sec_sleep: int, int, how often that the system should look for pending jobs
+    :return: None
+    """
+    if int_weekday == 1:
+        schedule.every(int_freq).monday.at(str_time).do(action, **kwargs)
+    if int_weekday == 2:
+        schedule.every(int_freq).tuesday.at(str_time).do(action, **kwargs)
+    if int_weekday == 3:
+        schedule.every(int_freq).wednesday.at(str_time).do(action, **kwargs)
+    if int_weekday == 4:
+        schedule.every(int_freq).thursday.at(str_time).do(action, **kwargs)
+    if int_weekday == 5:
+        schedule.every(int_freq).friday.at(str_time).do(action, **kwargs)
+    if int_weekday == 6:
+        schedule.every(int_freq).saturday.at(str_time).do(action, **kwargs)
+    if int_weekday == 7:
+        schedule.every(int_freq).sunday.at(str_time).do(action, **kwargs)
+
+    return None
 
 ##################################
 #### Create RandomGroup Class ####
@@ -17,7 +47,7 @@ class RandomGroups:
     """
     def __init__(self, bot_token, chat_prompts, group_size, channel_name="mban"):
         """
-        Take a list of users and generate random groups at a specified time
+        Take a list of users and generate random groups at a specified time.
 
         :param active_user_ids: a list of users who will join the random group event
         :param group_size: pre-defined group size
@@ -28,13 +58,19 @@ class RandomGroups:
         self.channel_name = channel_name
 
     def _generate_groups(self, lst, n):
-        """Helper function to generate groups of n from the lst."""
+        """
+        Helper function to generate groups of n from the lst.
+
+        :param lst: a list
+        :param n: the size of the group
+        :return: a list of groups
+        """
         for i in range(0, len(lst), n):
             yield lst[i:i+n]
 
     def _assign_random_groups(self, user_ids):
         """
-        Assign list of users to random groups
+        Assign list of users to random groups.
         
         :param user_ids: list, list of user ids to split into random groups
         :return lst_groups: list of groups of users
@@ -76,6 +112,7 @@ class RandomGroups:
         """
         Groups all participating people randomly and start group chats. Called by schedule_group_chats()
         """
+
         db = DataBaseUtils(channel_name=self.channel_name)
         users_in_person = db.get_users(participate=True, virtual=False)
         users_virtual = db.get_users(participate=True, virtual=True)
@@ -106,12 +143,13 @@ class RandomGroups:
                 logger.error("Error scheduling message: {}".format(e))
 
     def schedule_group_chats(self, int_weekday, int_freq, str_time, sec_sleep):
-        """ Schedule group chats every week using given parameters 
-        :param int_weekday: int, 
-        :param int_freq: int,
-        :param str_time: int,
-        :param sec_sleep: int,
-        :return: 
+        """ Schedule group chats every week using given parameters.
+
+        :param int_weekday: int (1-7), 1-Monday, 2-Tuesday...7-Sunday
+        :param int_freq: int, 1-every week, 2-every other week...
+        :param str_time: str, 24hour format e.g. "16:30"
+        :param sec_sleep: int, how often that the system should look for pending jobs
+        :return: None
         """
         schedule_helper(int_weekday, int_freq, str_time, self.start_group_chats)
 
@@ -119,33 +157,6 @@ class RandomGroups:
             # Checks whether a scheduled task is pending to run or not
             schedule.run_pending()
             time.sleep(sec_sleep)
-
-
-def schedule_helper(int_weekday, int_freq, str_time, action, **kwargs):
-    """
-    Helper function to schedule recurring jobs
-    :param int_weekday: int, 
-    :param int_freq: int,
-    :param str_time: int,
-    :param sec_sleep: int,
-    :return:
-    """
-    if int_weekday == 1:
-        schedule.every(int_freq).monday.at(str_time).do(action, **kwargs)
-    if int_weekday == 2:
-        schedule.every(int_freq).tuesday.at(str_time).do(action, **kwargs)
-    if int_weekday == 3:
-        schedule.every(int_freq).wednesday.at(str_time).do(action, **kwargs)
-    if int_weekday == 4:
-        schedule.every(int_freq).thursday.at(str_time).do(action, **kwargs)
-    if int_weekday == 5:
-        schedule.every(int_freq).friday.at(str_time).do(action, **kwargs)
-    if int_weekday == 6:
-        schedule.every(int_freq).saturday.at(str_time).do(action, **kwargs)
-    if int_weekday == 7:
-        schedule.every(int_freq).sunday.at(str_time).do(action, **kwargs)
-
-    return None
 
 
 ###############################################
@@ -157,20 +168,29 @@ class RandomGroupParticipation:
     """
     This class will focus on asking users whether they want to signup for the random group
     """
+
     def __init__(self, 
                 bot_token: str, 
                 user_ids: list, 
                 channel_name: str):
         """
-        Take a user and ask them if they would like to participate in
-        this week's RandomGroup and virtually or not
+        Take a user and ask them if they would like to participate in this week's RandomGroup and virtually or not.
+
+        :param bot_token: a string, bot token
+        :param user_ids: a list, that contains all user ids in the channel
+        :param channel_name: a string, channel name e.g. "mban2021", no space or any special characters
         """
         self.user_ids = user_ids
         self.bot_token = bot_token
         self.channel_name = channel_name
 
     def send_message(self, user_id):
+        """
+        Ask a user whether he/she would like to participate in the upcoming round of random group.
 
+        :param user_id: a string that represents a user id
+        :return: None
+        """
         logger = logging.getLogger()
         client = WebClient(token=os.environ.get(self.bot_token))
 
@@ -191,6 +211,11 @@ class RandomGroupParticipation:
             logger.error("Error scheduling message: {}".format(e))
         
     def send_message_to_all(self):
+        """
+        Send participation inquiry message to all users in the channel.
+
+        :return: None
+        """
         DataBaseUtils(self.channel_name).refresh_participation()
 
         ## send message to every user
@@ -198,6 +223,12 @@ class RandomGroupParticipation:
             self.send_message(user_id)
 
     def schedule_messages(self, int_weekday, int_freq, str_time, sec_sleep):
+        """
+        Schedule to send the participation message to all users in the channel.
+
+        See documentation for schedule_helper function.
+        """
+
         schedule_helper(int_weekday, int_freq, str_time, self.send_message_to_all)
 
         while True:
@@ -210,6 +241,12 @@ class RandomGroupParticipation:
 #### Pick a Random Quote       ####
 ###################################
 def pick_random_quote(path='responses/class_quotes.json'):
+    """
+    Get a random quote from a jason file.
+    
+    :param path: a string that indicates the location where the quotes are stored.
+    :return: a random quote
+    """
     with open(path) as f:
         responses = json.loads(f.read())
     response = random.sample(responses['responses'], 1)
