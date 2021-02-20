@@ -10,11 +10,10 @@ import pandas as pd
 ###################################
 class DataBaseUtils():
     def __init__(self, channel_name: str = "mban"):
-        # self.DATABASE_URL = "postgres://ntdoljutfrviin:52ca35af72485747db891c09ccc53575995eff89c370e6d2b2d07f2655dd177d@ec2-54-90-13-87.compute-1.amazonaws.com:5432/d7u9v3u0shgd1c"
         self.DATABASE_URL = os.environ["DATABASE_URL"]
         self.channel_name = channel_name
 
-    def get_users(self):
+    def get_users(self, participate: bool = None, virtual: bool = False):
         """
         get list of all users in a channel
 
@@ -30,8 +29,10 @@ class DataBaseUtils():
         cur.close()
         conn.close()
 
-        return users.user_ids.to_list()
+        if participate is not None:
+            users = users.query(f"participate == {int(participate)} and virtual == {int(virtual)}")
 
+        return users.user_ids.to_list()
     
     def refresh_participation(self):
         """

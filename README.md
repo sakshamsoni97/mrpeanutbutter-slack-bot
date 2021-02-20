@@ -14,6 +14,8 @@ This slack bot is a fun side project we undertook because we wanted to find crea
     a. add docstrings to all functions
     b. add installation and start-up instructions to README
 4. create config (yml) file for parameters like scheduling freq etc.
+5. create postgres table
+6. requirements.txt file
 
 # Authors
 Saksham - @sakshamsoni97 \

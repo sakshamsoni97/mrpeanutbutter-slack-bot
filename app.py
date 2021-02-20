@@ -160,7 +160,7 @@ if __name__ == "__main__":
     schedule_messages(int_weekday=1, int_freq=1, str_time='16:29', sec_sleep=10)
 
   ## schedule random group
-  RandomGroups(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, group_size=2).\
-    schedule_group_chats(int_weekday=2, int_freq=1, str_time='16:29', sec_sleep=10, chat_prompts=chat_prompts)
+  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=2).\
+    schedule_group_chats(int_weekday=2, int_freq=1, str_time='16:29', sec_sleep=10)
 
   app.start(port=int(os.environ.get("PORT", 3000)))
