@@ -1,7 +1,7 @@
 # Mr. PeanutButter Slack Bot
 This is Mr. PeanutButter, he is a yellow labrador, Holywoo star and a good boy.
 
-![Mr. Peanutbutter] (https://github.com/sakshamsoni97/mban-slack-bot/tree/master/images/mr-peanutbutter-hd.png)
+![Mr. Peanutbutter](https://github.com/sakshamsoni97/mban-slack-bot/tree/master/images/mr-peanutbutter-hd.png)
 
 This slack bot is a fun side project we undertook because we wanted to find creative ways to increase interaction within our class. Mr. PB matches people randomly and gives them reasons to connect. He can also do other fun stuff.
 
