@@ -3,6 +3,7 @@ import re
 import datetime
 import logging
 import json
+import yaml
 
 from slack_bolt import App
 from slack_sdk.errors import SlackApiError
@@ -11,7 +12,7 @@ from slack_sdk import WebClient, logging
 from MrPeanutButter.bot_utils import RandomGroups, RandomGroupParticipation, pick_random_quote
 from MrPeanutButter.db_utils import DataBaseUtils
 
-### Initial Set up ###
+### Initial Setup ###
 
 # Constants
 today = datetime.date.today()
@@ -19,6 +20,8 @@ SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
 with open('responses/chat_prompts.json') as f:
    chat_prompts = json.loads(f.read())
+with open("config.yml", 'r') as stream:
+  config = yaml.safe_load(stream)
 
 # Initializes the app
 app = App(
@@ -167,14 +170,22 @@ def update_home_tab(client, event, logger):
 
 ### Start the app ###
 if __name__ == "__main__":
+
   user_ids = DataBaseUtils(channel_name="mban").get_users()
 
   ## schedule weekly participation messages
-  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, channel_name="mban").\
-    schedule_messages(int_weekday=1, int_freq=1, str_time='16:29', sec_sleep=10)
+  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
+                           channel_name=config['rg-participation-scheduler']['channel_name']).\
+    schedule_messages(int_weekday=config['rg-participation-scheduler']['int_weekday'],
+                      int_freq=config['rg-participation-scheduler']['int_freq'],
+                      str_time=config['rg-participation-scheduler']['str_time'],
+                      sec_sleep=config['rg-participation-scheduler']['sec_sleep'])
 
   ## schedule random group
-  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=2).\
-    schedule_group_chats(int_weekday=2, int_freq=1, str_time='16:29', sec_sleep=10)
+  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=config['rg-scheduler']['group_size']).\
+    schedule_group_chats(int_weekday=config['rg-scheduler']['int_weekday'],
+                         int_freq=config['rg-scheduler']['int_freq'],
+                         str_time=config['rg-scheduler']['str_time'],
+                         sec_sleep=config['rg-scheduler']['sec_sleep'])
 
   app.start(port=int(os.environ.get("PORT", 3000)))
