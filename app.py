@@ -92,6 +92,21 @@ def get_not_participating(ack, say, body):
   DataBaseUtils(channel_name="mban").\
     update_user_response(user_id=body['user']['id'], participating=False, virtual=False)
 
+@app.command("/send-participation-message")
+def send_participation_message_manual(ack, say, command):
+  ack()
+  user_ids = DataBaseUtils(channel_name="mban").get_users()
+  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, 
+  channel_name=config['rg-participation-scheduler']['channel_name']).send_message_to_all()
+  say("sent")
+
+@app.command("/create-random-groups")
+def create_random_groups_manual(ack, say, command):
+  ack()
+  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, 
+  group_size=config['rg-scheduler']['group_size']).start_group_chats()
+  say("created")
+
 
 ### Random Groups ###
 
@@ -171,21 +186,23 @@ def update_home_tab(client, event, logger):
 ### Start the app ###
 if __name__ == "__main__":
 
-  user_ids = DataBaseUtils(channel_name="mban").get_users()
+  # user_ids = DataBaseUtils(channel_name="mban").get_users()
 
   ## schedule weekly participation messages
-  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
-                           channel_name=config['rg-participation-scheduler']['channel_name']).\
-    schedule_messages(int_weekday=config['rg-participation-scheduler']['int_weekday'],
-                      int_freq=config['rg-participation-scheduler']['int_freq'],
-                      str_time=config['rg-participation-scheduler']['str_time'],
-                      sec_sleep=config['rg-participation-scheduler']['sec_sleep'])
+  # RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
+  #                          channel_name=config['rg-participation-scheduler']['channel_name']).\
+  #   schedule_messages(int_weekday=config['rg-participation-scheduler']['int_weekday'],
+  #                     int_freq=config['rg-participation-scheduler']['int_freq'],
+  #                     str_time=config['rg-participation-scheduler']['str_time'],
+  #                     sec_sleep=config['rg-participation-scheduler']['sec_sleep'])
 
-  ## schedule random group
-  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=config['rg-scheduler']['group_size']).\
-    schedule_group_chats(int_weekday=config['rg-scheduler']['int_weekday'],
-                         int_freq=config['rg-scheduler']['int_freq'],
-                         str_time=config['rg-scheduler']['str_time'],
-                         sec_sleep=config['rg-scheduler']['sec_sleep'])
+  # print("checkpoint")
+
+  # ## schedule random group
+  # RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=config['rg-scheduler']['group_size']).\
+  #   schedule_group_chats(int_weekday=config['rg-scheduler']['int_weekday'],
+  #                        int_freq=config['rg-scheduler']['int_freq'],
+  #                        str_time=config['rg-scheduler']['str_time'],
+  #                        sec_sleep=config['rg-scheduler']['sec_sleep'])
 
   app.start(port=int(os.environ.get("PORT", 3000)))
