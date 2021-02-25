@@ -53,14 +53,14 @@ def send_random_quote(ack, say, command):
 @app.action("update-participation")
 def send_participation_message(ack, say, body):
   ack()
-  user = body["user"]["user_id"]
+  user = body["user"]["id"]
   RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=[], channel_name="mban").send_message(user)
 
 # check participation status
 @app.action("participation-status")
 def check_participation_status(ack, say, body):
   ack()
-  user = body["user"]["user_id"]
+  user = body["user"]["id"]
   say("Whoops... looks like I don't have this capability right now. In other words, someone was too lazy to code this.")
 
 
@@ -69,37 +69,39 @@ def check_participation_status(ack, say, body):
 def get_inperson_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for an IN-PERSON random meetup.')
-  logger.info(f"{body['user']['username']} responded {body['actions'][0]['value}']}")  # TODO: change this to logging in file
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")  # TODO: change this to logging in file
   DataBaseUtils(channel_name="mban").\
-    update_user_response(user_id=body['user']['user_id'], participating=True, virtual=False)
+    update_user_response(user_id=body['user']['id'], participating=True, virtual=False)
 
 @app.action("rg-virtual")
 def get_virtual_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for a VIRTUAL random meetup.')
-  logger.info(f"{body['user']['username']} responded {body['actions'][0]['value}']}")
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")
   DataBaseUtils(channel_name="mban").\
-    update_user_response(user_id=body['user']['user_id'], participating=True, virtual=True)
+    update_user_response(user_id=body['user']['id'], participating=True, virtual=True)
 
 @app.action("rg-no")
 def get_not_participating(ack, say, body):
   ack()
   say('Oh no! We are sad that you cannot make it this time, please consider joining the next one!')
-  logger.info(f"{body['user']['username']} responded {body['actions'][0]['value}']}")
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")
   DataBaseUtils(channel_name="mban").\
-    update_user_response(user_id=body['user']['user_id'], participating=False, virtual=False)
+    update_user_response(user_id=body['user']['id'], participating=False, virtual=False)
 
 
 ### Random Groups ###
 
-@app.message(":wave: ")
-def say_hello(message, say):
-  user = message['user']
-  say(f"Hi there, <@{user}>!")
-
-@app.message("knock knock")
-def ask_who(message, say):
-  say("_Who's there?_")
+@app.event("app_mention")
+def respond_to_mention(ack, say, body):
+  ack()
+  message = body['event']['text']
+  if ':wave:' in message:
+    say(f"Hello, <@{body['event']['user']}>")
+  elif 'knock knock' in message:
+    say("Woof! who's there?")
+  else:
+    say("Sorry, I didn't get that one")
 
 
 @app.event("app_home_opened")

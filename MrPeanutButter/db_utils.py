@@ -32,7 +32,7 @@ class DataBaseUtils():
         if participate is not None:
             users = users.query(f"participate == {int(participate)} and virtual == {int(virtual)}")
 
-        return users.user_ids.to_list()
+        return users.user_id.to_list()
     
     def refresh_participation(self):
         """

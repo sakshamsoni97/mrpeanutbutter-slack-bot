@@ -5,7 +5,7 @@ from slack_sdk import WebClient, logging
 from slack_sdk.errors import SlackApiError
 import json
 import schedule, time
-from db_utils import DataBaseUtils
+from MrPeanutButter.db_utils import DataBaseUtils
 
 ##################################
 #### General Helper Functions ####
