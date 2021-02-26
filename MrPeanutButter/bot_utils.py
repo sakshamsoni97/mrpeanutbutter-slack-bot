@@ -136,12 +136,12 @@ class RandomGroups:
                     token=self.bot_token,
                     users=','.join(group))
 
-                #TODO: edit the hyper link to when2meet
+                #TODO: edit the message to look better
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
                     text="Ta daa! \nDesinty created this group. Everyone here is up for IN-PERSON meetup. "+\
-                         "Consider using https://www.when2meet.com to schedule a time.\n"+\
+                         "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
                          "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
 
@@ -156,12 +156,12 @@ class RandomGroups:
                     token=self.bot_token,
                     users=','.join(group))
 
-                #TODO: edit the hyper link to when2meet
+                #TODO: edit the message to look better
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
                     text="Ta daa! \nDesinty created this group. Everyone here is up for VIRTUAL meetup. "+\
-                         "Consider using https://www.when2meet.com to schedule a time.\n"+\
+                         "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
                          "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
 
