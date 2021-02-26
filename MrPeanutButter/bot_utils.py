@@ -121,11 +121,11 @@ class RandomGroups:
         users_in_person = db.get_users(participate=True, virtual=False)
         users_virtual = db.get_users(participate=True, virtual=True)
 
-        random.seed(round( time.time() / 1e6 ) ) ## put random seed to make sure we don't get the same groups everytime
+        random.seed(round(time.time()) % 1e5 ) ## put random seed to make sure we don't get the same groups everytime
         random_groups_in_person = self._assign_random_groups(users_in_person)
         random_groups_virtual = self._assign_random_groups(users_virtual)
 
-        random_groups = random_groups_in_person + random_groups_virtual
+        # random_groups = random_groups_in_person + random_groups_virtual
 
         client = WebClient(token=os.environ.get(self.bot_token))
 
@@ -148,7 +148,7 @@ class RandomGroups:
             except SlackApiError as e:
                 self.logger.error(f"Error scheduling message for users {group}: {e}")
 
-            self.logger.info("finieshed creating random groups")
+        self.logger.info("finieshed creating in person random groups")
 
         for group in random_groups_virtual:
             try:
@@ -168,7 +168,7 @@ class RandomGroups:
             except SlackApiError as e:
                 self.logger.error(f"Error scheduling message for users {group}: {e}")
 
-            self.logger.info("finieshed creating random groups")
+        self.logger.info("finieshed creating virtual random groups")
 
     def schedule_group_chats(self, int_weekday, int_freq, str_time, sec_sleep):
         """ Schedule group chats every week using given parameters.
@@ -244,7 +244,6 @@ class RandomGroupParticipation:
 
         :return: None
         """
-        DataBaseUtils(self.channel_name)
         DataBaseUtils(self.channel_name).refresh_participation()
 
         ## send message to every user
@@ -279,7 +278,6 @@ def pick_random_quote(path='responses/class_quotes.json'):
     """
     with open(path) as f:
         responses = json.loads(f.read())
-    #TODO: change the seed
-    random.seed(round( time.time() / 10 ) ) ## put random seed to make sure we don't get the same groups everytime
+    random.seed(round(time.time()) % 1e5) ## put random seed to make sure we don't get the same groups everytime
     response = random.sample(responses['responses'], 1)[0]
     return '"' + response["quote"] + '"' + " -- " + response["quotee"]

@@ -19,6 +19,7 @@ from MrPeanutButter.db_utils import DataBaseUtils
 today = datetime.date.today()
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
+PORT = int(os.environ.get("PORT"))
 with open('responses/chat_prompts.json') as f:
    chat_prompts = json.loads(f.read())
 with open("config.yml", 'r') as stream:
@@ -206,4 +207,4 @@ if __name__ == "__main__":
   #                        str_time=config['rg-scheduler']['str_time'],
   #                        sec_sleep=config['rg-scheduler']['sec_sleep'])
 
-  app.start(port=int(os.environ.get("PORT", 3000)))
+  app.start(port=int(os.environ.get("PORT", PORT)))
