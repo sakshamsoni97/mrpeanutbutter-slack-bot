@@ -21,7 +21,6 @@ class DataBaseUtils():
         """
         conn = psycopg2.connect(self.DATABASE_URL, sslmode='require')
         cur = conn.cursor()
-
         ## refresh participate values
         cur.execute(f"SELECT * FROM users_{self.channel_name}")
         users = pd.DataFrame(cur.fetchall(), columns=['user_id', 'participate', 'virtual'])
@@ -31,7 +30,6 @@ class DataBaseUtils():
 
         if participate is not None:
             users = users.query(f"participate == {int(participate)} and virtual == {int(virtual)}")
-
         return users.user_id.to_list()
     
     def refresh_participation(self):

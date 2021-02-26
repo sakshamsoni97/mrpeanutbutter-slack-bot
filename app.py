@@ -9,7 +9,8 @@ from slack_bolt import App
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient, logging
 
-from MrPeanutButter.bot_utils import RandomGroups, RandomGroupParticipation, pick_random_quote
+# from MrPeanutButter.bot_utils import RandomGroups, RandomGroupParticipation, pick_random_quote
+from MrPeanutButter.bot_utils import *
 from MrPeanutButter.db_utils import DataBaseUtils
 
 ### Initial Setup ###
@@ -48,7 +49,6 @@ logger = logging.getLogger("mr.pb.logger")
 def send_random_quote(ack, say, command):
   ack()
   say(pick_random_quote())
-
 
 ### Weekly Participation Messages ###
 
@@ -96,15 +96,18 @@ def get_not_participating(ack, say, body):
 def send_participation_message_manual(ack, say, command):
   ack()
   user_ids = DataBaseUtils(channel_name="mban").get_users()
-  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids, 
-  channel_name=config['rg-participation-scheduler']['channel_name']).send_message_to_all()
-  say("sent")
+  print(user_ids)
+  print(config['rg-participation-scheduler']['channel_name'])
+  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
+                           channel_name=config['rg-participation-scheduler']['channel_name']).send_message_to_all()
+
 
 @app.command("/create-random-groups")
 def create_random_groups_manual(ack, say, command):
   ack()
-  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, 
-  group_size=config['rg-scheduler']['group_size']).start_group_chats()
+  print(chat_prompts)
+  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts,
+               group_size=config['rg-scheduler']['group_size']).start_group_chats()
   say("created")
 
 

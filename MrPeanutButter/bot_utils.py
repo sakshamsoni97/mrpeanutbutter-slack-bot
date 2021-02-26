@@ -113,7 +113,6 @@ class RandomGroups:
         """
         Groups all participating people randomly and start group chats. Called by schedule_group_chats()
         """
-
         db = DataBaseUtils(channel_name=self.channel_name)
         users_in_person = db.get_users(participate=True, virtual=False)
         users_virtual = db.get_users(participate=True, virtual=True)
@@ -127,8 +126,10 @@ class RandomGroups:
         client = WebClient(token=os.environ.get(self.bot_token))
 
         # initialize chats for each random group
+        print(random_groups)
         for group in random_groups:
             try:
+                print(','.join(group))
                 result = client.conversations_open(
                     token=self.bot_token,
                     users=','.join(group))
@@ -186,6 +187,7 @@ class RandomGroupParticipation:
         self.bot_token = bot_token
         self.channel_name = channel_name
         self.logger = logging.getLogger("mr.pb.logger")
+        print("initialized!")
 
     def send_message(self, user_id):
         """
@@ -218,6 +220,9 @@ class RandomGroupParticipation:
 
         :return: None
         """
+        print(self.channel_name)
+        DataBaseUtils(self.channel_name)
+        print("db utils ran")
         DataBaseUtils(self.channel_name).refresh_participation()
 
         ## send message to every user
@@ -253,5 +258,5 @@ def pick_random_quote(path='responses/class_quotes.json'):
     with open(path) as f:
         responses = json.loads(f.read())
     random.seed(round( time.time() / 1e6 ) ) ## put random seed to make sure we don't get the same groups everytime
-    response = random.sample(responses['responses'], 1)
-    return((response["quote"], response["quotee"]))
+    response = random.sample(responses['responses'], 1)[0]
+    return '"' + response["quote"] + '"' + " -- " + response["quotee"]
