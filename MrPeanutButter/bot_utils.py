@@ -257,6 +257,7 @@ def pick_random_quote(path='responses/class_quotes.json'):
     """
     with open(path) as f:
         responses = json.loads(f.read())
-    random.seed(round( time.time() / 1e6 ) ) ## put random seed to make sure we don't get the same groups everytime
+    #TODO: change the seed
+    random.seed(round( time.time() / 10 ) ) ## put random seed to make sure we don't get the same groups everytime
     response = random.sample(responses['responses'], 1)[0]
     return '"' + response["quote"] + '"' + " -- " + response["quotee"]
