@@ -61,8 +61,7 @@ class DataBaseUtils():
         cur = conn.cursor()
 
         ## refresh participate values
-        cur.execute(f"UPDATE users_{self.channel_name} SET participate = {int(participating)}, virtual = {int(virtual)} WHERE user_id = {user_id}")
-
+        cur.execute(f"UPDATE users_{self.channel_name} SET participate = {int(participating)}, virtual = {int(virtual)} WHERE user_id = \'{user_id}\'")
         conn.commit()
         cur.close()
         conn.close()

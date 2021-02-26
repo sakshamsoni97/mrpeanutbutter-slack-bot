@@ -80,6 +80,10 @@ class RandomGroups:
         mod = num_users % self.group_size
         random.shuffle(user_ids)
 
+        # safe guard against the case that only a few people want to join the group
+        if num_users == 1:
+            return None
+
         # if the group size is 2 and number of participants is odd, add one user to a random group
         if self.group_size==2:
             if mod == 1:
@@ -126,18 +130,39 @@ class RandomGroups:
         client = WebClient(token=os.environ.get(self.bot_token))
 
         # initialize chats for each random group
-        print(random_groups)
-        for group in random_groups:
+        for group in random_groups_in_person:
             try:
-                print(','.join(group))
                 result = client.conversations_open(
                     token=self.bot_token,
                     users=','.join(group))
 
+                #TODO: edit the hyper link to when2meet
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
-                    text="Ta daa! \nDesinty created this group. Now, answer the following question: \n\n" +
+                    text="Ta daa! \nDesinty created this group. Everyone here is up for IN-PERSON meetup. "+\
+                         "Consider using https://www.when2meet.com to schedule a time.\n"+\
+                         "Now, answer the following question: \n\n" +
+                         random.sample(self.chat_prompts['responses'], 1)[0])
+
+            except SlackApiError as e:
+                self.logger.error(f"Error scheduling message for users {group}: {e}")
+
+            self.logger.info("finieshed creating random groups")
+
+        for group in random_groups_virtual:
+            try:
+                result = client.conversations_open(
+                    token=self.bot_token,
+                    users=','.join(group))
+
+                #TODO: edit the hyper link to when2meet
+                client.chat_postMessage(
+                    token=self.bot_token,
+                    channel=result['channel']['id'],
+                    text="Ta daa! \nDesinty created this group. Everyone here is up for VIRTUAL meetup. "+\
+                         "Consider using https://www.when2meet.com to schedule a time.\n"+\
+                         "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
 
             except SlackApiError as e:
@@ -187,7 +212,6 @@ class RandomGroupParticipation:
         self.bot_token = bot_token
         self.channel_name = channel_name
         self.logger = logging.getLogger("mr.pb.logger")
-        print("initialized!")
 
     def send_message(self, user_id):
         """
@@ -220,9 +244,7 @@ class RandomGroupParticipation:
 
         :return: None
         """
-        print(self.channel_name)
         DataBaseUtils(self.channel_name)
-        print("db utils ran")
         DataBaseUtils(self.channel_name).refresh_participation()
 
         ## send message to every user

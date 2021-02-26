@@ -73,6 +73,7 @@ def get_inperson_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for an IN-PERSON random meetup.')
   logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")  # TODO: change this to logging in file
+  # make channel name in yaml file
   DataBaseUtils(channel_name="mban").\
     update_user_response(user_id=body['user']['id'], participating=True, virtual=False)
 
@@ -96,19 +97,16 @@ def get_not_participating(ack, say, body):
 def send_participation_message_manual(ack, say, command):
   ack()
   user_ids = DataBaseUtils(channel_name="mban").get_users()
-  print(user_ids)
-  print(config['rg-participation-scheduler']['channel_name'])
   RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
                            channel_name=config['rg-participation-scheduler']['channel_name']).send_message_to_all()
-
+  say("sent!")
 
 @app.command("/create-random-groups")
 def create_random_groups_manual(ack, say, command):
   ack()
-  print(chat_prompts)
   RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts,
                group_size=config['rg-scheduler']['group_size']).start_group_chats()
-  say("created")
+  say("created!")
 
 
 ### Random Groups ###
