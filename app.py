@@ -207,4 +207,4 @@ if __name__ == "__main__":
   #                        str_time=config['rg-scheduler']['str_time'],
   #                        sec_sleep=config['rg-scheduler']['sec_sleep'])
 
-  app.start(port=int(os.environ.get("PORT", PORT)))
+  app.start(port=PORT)
