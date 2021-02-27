@@ -112,17 +112,18 @@ def create_random_groups_manual(ack, say, command):
 
 ### Random Groups ###
 
-@app.event("app_mention")
-def respond_to_mention(ack, say, body):
-  ack()
-  message = body['event']['text']
-  if ':wave:' in message:
-    say(f"Hello, <@{body['event']['user']}>")
-  elif 'knock knock' in message:
-    say("Woof! who's there?")
-  else:
-    say("Sorry, I didn't get that one")
+@app.message("PB knock knock")
+def respond_knock(message, say):
+  say("Woof! Who's there?") 
 
+@app.message("PB :wave:")
+def respond_wave(message, say):
+  user = message['user']
+  say(f"Hello, <@{user}>") 
+
+@app.message("PB what can you do?")
+def respond_about(message, say):
+  say("Well, not much really. The humans that coded me were not very bright. But I can tell you random quotes and help you socialize every week.") 
 
 @app.event("app_home_opened")
 def update_home_tab(client, event, logger):
