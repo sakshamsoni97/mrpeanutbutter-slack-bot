@@ -9,7 +9,8 @@ from slack_bolt import App
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient, logging
 
-from MrPeanutButter.bot_utils import RandomGroups, RandomGroupParticipation, pick_random_quote
+# from MrPeanutButter.bot_utils import RandomGroups, RandomGroupParticipation, pick_random_quote
+from MrPeanutButter.bot_utils import *
 from MrPeanutButter.db_utils import DataBaseUtils
 
 ### Initial Setup ###
@@ -18,6 +19,7 @@ from MrPeanutButter.db_utils import DataBaseUtils
 today = datetime.date.today()
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.environ.get("SLACK_SIGNING_SECRET")
+PORT = int(os.environ.get("PORT"))
 with open('responses/chat_prompts.json') as f:
    chat_prompts = json.loads(f.read())
 with open("config.yml", 'r') as stream:
@@ -29,6 +31,19 @@ app = App(
   signing_secret=SLACK_SIGNING_SECRET
 )
 
+# logger
+if not os.path.exists("logs/"):
+  os.mkdir("logs/")
+
+logger_filename = "logs/MrPB_runtime_logs.log"
+logging.basicConfig(
+      filename=logger_filename,
+      level=logging.DEBUG,
+      format="%(asctime)s | %(module)s | %(levelname)s | %(message)s",
+      datefmt="%m-%d-%Y %I:%M:%S %p",
+  )
+logger = logging.getLogger("mr.pb.logger")
+
 ### Random Quote ###
 
 @app.command("/quote")
@@ -36,21 +51,20 @@ def send_random_quote(ack, say, command):
   ack()
   say(pick_random_quote())
 
-
 ### Weekly Participation Messages ###
 
 # user initiated participation update
 @app.action("update-participation")
 def send_participation_message(ack, say, body):
   ack()
-  user = body["user"]["user_id"]
+  user = body["user"]["id"]
   RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=[], channel_name="mban").send_message(user)
 
 # check participation status
 @app.action("participation-status")
 def check_participation_status(ack, say, body):
   ack()
-  user = body["user"]["user_id"]
+  user = body["user"]["id"]
   say("Whoops... looks like I don't have this capability right now. In other words, someone was too lazy to code this.")
 
 
@@ -59,39 +73,57 @@ def check_participation_status(ack, say, body):
 def get_inperson_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for an IN-PERSON random meetup.')
-  print(body['user']['username'], body['actions'][0]['value'])  # TODO: change this to logging in file
-  #TODO: @Saksham & @Daniel - add a function in the line below to update your user status! - let us know if u have questions
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")  # TODO: change this to logging in file
+  # make channel name in yaml file
   DataBaseUtils(channel_name="mban").\
-    update_user_response(user_id=body['user']['user_id'], participating=True, virtual=False)
+    update_user_response(user_id=body['user']['id'], participating=True, virtual=False)
 
 @app.action("rg-virtual")
 def get_virtual_participant(ack, say, body):
   ack()
   say('Great! You are confirmed for a VIRTUAL random meetup.')
-  print(body['user']['username'], body['actions'][0]['value'])
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")
   DataBaseUtils(channel_name="mban").\
-    update_user_response(user_id=body['user']['user_id'], participating=True, virtual=True)
+    update_user_response(user_id=body['user']['id'], participating=True, virtual=True)
 
 @app.action("rg-no")
 def get_not_participating(ack, say, body):
   ack()
   say('Oh no! We are sad that you cannot make it this time, please consider joining the next one!')
-  print(body['user']['username'], body['actions'][0]['value'])
+  logger.info(f"{body['user']['username']} responded {body['actions'][0]['action_id']}")
   DataBaseUtils(channel_name="mban").\
-    update_user_response(user_id=body['user']['user_id'], participating=False, virtual=False)
+    update_user_response(user_id=body['user']['id'], participating=False, virtual=False)
+
+@app.command("/send-participation-message")
+def send_participation_message_manual(ack, say, command):
+  ack()
+  user_ids = DataBaseUtils(channel_name="mban").get_users()
+  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
+                           channel_name=config['rg-participation-scheduler']['channel_name']).send_message_to_all()
+  say("sent!")
+
+@app.command("/create-random-groups")
+def create_random_groups_manual(ack, say, command):
+  ack()
+  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts,
+               group_size=config['rg-scheduler']['group_size']).start_group_chats()
+  say("created!")
 
 
 ### Random Groups ###
 
-@app.message(":wave:")
-def say_hello(message, say):
+@app.message("PB knock knock")
+def respond_knock(message, say):
+  say("Woof! Who's there?") 
+
+@app.message("PB :wave:")
+def respond_wave(message, say):
   user = message['user']
-  say(f"Hi there, <@{user}>!")
+  say(f"Hello, <@{user}>") 
 
-@app.message("knock knock")
-def ask_who(message, say):
-  say("_Who's there?_")
-
+@app.message("PB what can you do?")
+def respond_about(message, say):
+  say("Well, not much really. The humans that coded me were not very bright. But I can tell you random quotes and help you socialize every week.") 
 
 @app.event("app_home_opened")
 def update_home_tab(client, event, logger):
@@ -157,21 +189,23 @@ def update_home_tab(client, event, logger):
 ### Start the app ###
 if __name__ == "__main__":
 
-  user_ids = DataBaseUtils(channel_name="mban").get_users()
+  # user_ids = DataBaseUtils(channel_name="mban").get_users()
 
   ## schedule weekly participation messages
-  RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
-                           channel_name=config['rg-participation-scheduler']['channel_name']).\
-    schedule_messages(int_weekday=config['rg-participation-scheduler']['int_weekday'],
-                      int_freq=config['rg-participation-scheduler']['int_freq'],
-                      str_time=config['rg-participation-scheduler']['str_time'],
-                      sec_sleep=config['rg-participation-scheduler']['sec_sleep'])
+  # RandomGroupParticipation(bot_token=SLACK_BOT_TOKEN, user_ids=user_ids,
+  #                          channel_name=config['rg-participation-scheduler']['channel_name']).\
+  #   schedule_messages(int_weekday=config['rg-participation-scheduler']['int_weekday'],
+  #                     int_freq=config['rg-participation-scheduler']['int_freq'],
+  #                     str_time=config['rg-participation-scheduler']['str_time'],
+  #                     sec_sleep=config['rg-participation-scheduler']['sec_sleep'])
 
-  ## schedule random group
-  RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=config['rg-scheduler']['group_size']).\
-    schedule_group_chats(int_weekday=config['rg-scheduler']['int_weekday'],
-                         int_freq=config['rg-scheduler']['int_freq'],
-                         str_time=config['rg-scheduler']['str_time'],
-                         sec_sleep=config['rg-scheduler']['sec_sleep'])
+  # print("checkpoint")
 
-  app.start(port=int(os.environ.get("PORT", 3000)))
+  # ## schedule random group
+  # RandomGroups(bot_token=SLACK_BOT_TOKEN, chat_prompts=chat_prompts, group_size=config['rg-scheduler']['group_size']).\
+  #   schedule_group_chats(int_weekday=config['rg-scheduler']['int_weekday'],
+  #                        int_freq=config['rg-scheduler']['int_freq'],
+  #                        str_time=config['rg-scheduler']['str_time'],
+  #                        sec_sleep=config['rg-scheduler']['sec_sleep'])
+
+  app.start(port=PORT)

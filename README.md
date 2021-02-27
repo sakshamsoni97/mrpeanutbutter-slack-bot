@@ -8,13 +8,8 @@ This slack bot is a fun side project we undertook because we wanted to find crea
 
 ## TODO
 
-~~1. Streamlining Exception handling and logging~~
-2. Documentation - \
-    ~~a. add docstrings to all functions~~ \
-    b. add installation and start-up instructions to README
-~~3. create config (yml) file for parameters like scheduling freq etc.~~
-~~4. create postgres table~~
-~~5. requirements.txt file~~
+1. add installation and start-up instructions to README
+
 
 # Authors
 Saksham - @sakshamsoni97 \

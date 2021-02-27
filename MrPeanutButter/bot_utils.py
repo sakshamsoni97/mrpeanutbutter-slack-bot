@@ -5,7 +5,7 @@ from slack_sdk import WebClient, logging
 from slack_sdk.errors import SlackApiError
 import json
 import schedule, time
-from db_utils import DataBaseUtils
+from MrPeanutButter.db_utils import DataBaseUtils
 
 ##################################
 #### General Helper Functions ####
@@ -56,6 +56,7 @@ class RandomGroups:
         self.chat_prompts = chat_prompts
         self.group_size = group_size
         self.channel_name = channel_name
+        self.logger = logging.getLogger("mr.pb.logger")
 
     def _generate_groups(self, lst, n):
         """
@@ -78,6 +79,10 @@ class RandomGroups:
         num_users = len(user_ids)
         mod = num_users % self.group_size
         random.shuffle(user_ids)
+
+        # safe guard against the case that only a few people want to join the group
+        if num_users == 1:
+            return None
 
         # if the group size is 2 and number of participants is odd, add one user to a random group
         if self.group_size==2:
@@ -112,35 +117,58 @@ class RandomGroups:
         """
         Groups all participating people randomly and start group chats. Called by schedule_group_chats()
         """
-
         db = DataBaseUtils(channel_name=self.channel_name)
         users_in_person = db.get_users(participate=True, virtual=False)
         users_virtual = db.get_users(participate=True, virtual=True)
 
-        random.seed(round( time.time() / 1e6 ) ) ## put random seed to make sure we don't get the same groups everytime
+        random.seed(round(time.time()) % 1e5 ) ## put random seed to make sure we don't get the same groups everytime
         random_groups_in_person = self._assign_random_groups(users_in_person)
         random_groups_virtual = self._assign_random_groups(users_virtual)
 
-        random_groups = random_groups_in_person + random_groups_virtual
+        # random_groups = random_groups_in_person + random_groups_virtual
 
-        logger = logging.getLogger()
         client = WebClient(token=os.environ.get(self.bot_token))
 
         # initialize chats for each random group
-        for group in random_groups:
+        for group in random_groups_in_person:
             try:
                 result = client.conversations_open(
                     token=self.bot_token,
                     users=','.join(group))
 
+                #TODO: edit the message to look better
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
-                    text="Ta daa! \nDesinty created this group. Now, answer the following question: \n\n" +
+                    text="Ta daa! \nDesinty created this group. Everyone here is up for IN-PERSON meetup. "+\
+                         "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
+                         "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
 
             except SlackApiError as e:
-                logger.error("Error scheduling message: {}".format(e))
+                self.logger.error(f"Error scheduling message for users {group}: {e}")
+
+        self.logger.info("finieshed creating in person random groups")
+
+        for group in random_groups_virtual:
+            try:
+                result = client.conversations_open(
+                    token=self.bot_token,
+                    users=','.join(group))
+
+                #TODO: edit the message to look better
+                client.chat_postMessage(
+                    token=self.bot_token,
+                    channel=result['channel']['id'],
+                    text="Ta daa! \nDesinty created this group. Everyone here is up for VIRTUAL meetup. "+\
+                         "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
+                         "Now, answer the following question: \n\n" +
+                         random.sample(self.chat_prompts['responses'], 1)[0])
+
+            except SlackApiError as e:
+                self.logger.error(f"Error scheduling message for users {group}: {e}")
+
+        self.logger.info("finieshed creating virtual random groups")
 
     def schedule_group_chats(self, int_weekday, int_freq, str_time, sec_sleep):
         """ Schedule group chats every week using given parameters.
@@ -183,6 +211,7 @@ class RandomGroupParticipation:
         self.user_ids = user_ids
         self.bot_token = bot_token
         self.channel_name = channel_name
+        self.logger = logging.getLogger("mr.pb.logger")
 
     def send_message(self, user_id):
         """
@@ -191,7 +220,6 @@ class RandomGroupParticipation:
         :param user_id: a string that represents a user id
         :return: None
         """
-        logger = logging.getLogger()
         client = WebClient(token=os.environ.get(self.bot_token))
 
         try:
@@ -208,7 +236,7 @@ class RandomGroupParticipation:
                 blocks=js_message)
 
         except SlackApiError as e:
-            logger.error("Error scheduling message: {}".format(e))
+            self.logger.error(f"Error scheduling message for user {user_id}: {e}")
         
     def send_message_to_all(self):
         """
@@ -221,6 +249,8 @@ class RandomGroupParticipation:
         ## send message to every user
         for user_id in self.user_ids:
             self.send_message(user_id)
+        
+        self.logger.info("sent participation messages to all")
 
     def schedule_messages(self, int_weekday, int_freq, str_time, sec_sleep):
         """
@@ -228,7 +258,6 @@ class RandomGroupParticipation:
 
         See documentation for schedule_helper function.
         """
-
         schedule_helper(int_weekday, int_freq, str_time, self.send_message_to_all)
 
         while True:
@@ -249,5 +278,6 @@ def pick_random_quote(path='responses/class_quotes.json'):
     """
     with open(path) as f:
         responses = json.loads(f.read())
-    response = random.sample(responses['responses'], 1)
-    return((response["quote"], response["quotee"]))
+    random.seed(round(time.time()) % 1e5) ## put random seed to make sure we don't get the same groups everytime
+    response = random.sample(responses['responses'], 1)[0]
+    return '"' + response["quote"] + '"' + " -- " + response["quotee"]
