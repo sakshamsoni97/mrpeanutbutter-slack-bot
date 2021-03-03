@@ -80,10 +80,14 @@ class RandomGroups:
         mod = num_users % self.group_size
         random.shuffle(user_ids)
 
-        # safe guard against the case that only a few people want to join the group
+        # safe guard against the case: only 1 user in the bucket (e.g. yes, virtual)
         if num_users == 1:
-            return None
+            return user_ids[0] # return a string
+        # if # of users is more than 1 but <= group size, we can just return the list
+        elif num_users <= self.group_size:
+            return user_ids # return the passed down list
 
+        # Now, assuming # of users > group size
         # if the group size is 2 and number of participants is odd, add one user to a random group
         if self.group_size==2:
             if mod == 1:
@@ -125,11 +129,38 @@ class RandomGroups:
         random_groups_in_person = self._assign_random_groups(users_in_person)
         random_groups_virtual = self._assign_random_groups(users_virtual)
 
-        # random_groups = random_groups_in_person + random_groups_virtual
-
         client = WebClient(token=os.environ.get(self.bot_token))
 
-        # initialize chats for each random group
+        # Guard against single user
+        if isinstance(random_groups_in_person, str):
+            try:
+                result = client.conversations_open(
+                    token=self.bot_token,
+                    users=random_groups_in_person)
+
+                client.chat_postMessage(
+                    token=self.bot_token,
+                    channel=result['channel']['id'],
+                    text="Uh oh, looks like you are the only one who signed up for IN-PERSON meetup this time. \n"+\
+                         "Please come back next week!")
+            except SlackApiError as e:
+                self.logger.error(f"Error scheduling message for users {random_groups_in_person}: {e}")
+
+        if isinstance(random_groups_virtual, str):
+            try:
+                result = client.conversations_open(
+                    token=self.bot_token,
+                    users=random_groups_virtual)
+
+                client.chat_postMessage(
+                    token=self.bot_token,
+                    channel=result['channel']['id'],
+                    text="Uh oh, looks like you are the only one who signed up for VIRTUAL meetup this time. \n"+\
+                         "Please come back next week!")
+            except SlackApiError as e:
+                self.logger.error(f"Error scheduling message for users {random_groups_virtual}: {e}")
+
+        # In-person, Indoor Group
         for group in random_groups_in_person:
             try:
                 result = client.conversations_open(
@@ -140,7 +171,7 @@ class RandomGroups:
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
-                    text="Ta daa! \nDesinty created this group. Everyone here is up for IN-PERSON meetup. "+\
+                    text="Ta daa! \nDestiny created this group. Everyone here is up for IN-PERSON meetup. "+\
                          "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
                          "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
@@ -150,6 +181,7 @@ class RandomGroups:
 
         self.logger.info("finieshed creating in person random groups")
 
+        # Virtual Group
         for group in random_groups_virtual:
             try:
                 result = client.conversations_open(
@@ -160,7 +192,7 @@ class RandomGroups:
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
-                    text="Ta daa! \nDesinty created this group. Everyone here is up for VIRTUAL meetup. "+\
+                    text="Ta daa! \nDestiny created this group. Everyone here is up for VIRTUAL meetup. "+\
                          "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
                          "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
