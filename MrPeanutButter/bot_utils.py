@@ -85,7 +85,7 @@ class RandomGroups:
             return user_ids[0] # return a string
         # if # of users is more than 1 but <= group size, we can just return the list
         elif num_users <= self.group_size:
-            return user_ids # return the passed down list
+            return [user_ids] # return the passed down list
 
         # Now, assuming # of users > group size
         # if the group size is 2 and number of participants is odd, add one user to a random group
