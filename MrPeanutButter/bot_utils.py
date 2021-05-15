@@ -80,9 +80,11 @@ class RandomGroups:
         mod = num_users % self.group_size
         random.shuffle(user_ids)
 
-        # safe guard against the case that only a few people want to join the group
         if num_users == 1:
-            return None
+            return user_ids[0] # return a string
+        # if # of users is more than 1 but <= group size, we can just return the list
+        elif num_users <= self.group_size:
+            return [user_ids] # return the passed down list
 
         # if the group size is 2 and number of participants is odd, add one user to a random group
         if self.group_size==2:
@@ -140,7 +142,7 @@ class RandomGroups:
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
-                    text="Ta daa! \nDesinty created this group. Everyone here is up for IN-PERSON meetup. "+\
+                    text="Ta daa! \nDestiny created this group. Everyone here is up for IN-PERSON meetup. "+\
                          "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
                          "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])
@@ -160,7 +162,7 @@ class RandomGroups:
                 client.chat_postMessage(
                     token=self.bot_token,
                     channel=result['channel']['id'],
-                    text="Ta daa! \nDesinty created this group. Everyone here is up for VIRTUAL meetup. "+\
+                    text="Ta daa! \nDestiny created this group. Everyone here is up for VIRTUAL meetup. "+\
                          "Consider using <https://www.when2meet.com|when2meet> to schedule a time.\n"+\
                          "Now, answer the following question: \n\n" +
                          random.sample(self.chat_prompts['responses'], 1)[0])

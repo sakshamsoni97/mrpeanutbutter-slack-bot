@@ -40,4 +40,4 @@ def create_users_table(channel_name, channel_id, DATABASE_URL):
 
 if __name__ == "__main__":
     DATABASE_URL = os.environ.get("DATABASE_URL")
-    create_users_table("mban", "G01HD2W1CVA", DATABASE_URL)
+    create_users_table("mban", "C01PND84ER5", DATABASE_URL)

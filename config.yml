@@ -3,7 +3,7 @@ rg-scheduler:
   channel_name: 'mban'
   int_weekday: 7
   int_freq: 1
-  str_time: "17:00"
+  str_time: "16:00"
   sec_sleep: 10
   group_size: 2
 
@@ -11,5 +11,5 @@ rg-participation-scheduler:
   channel_name: 'mban'
   int_weekday: 5
   int_freq: 1
-  str_time: "21:00"
+  str_time: "17:00"
   sec_sleep: 10
